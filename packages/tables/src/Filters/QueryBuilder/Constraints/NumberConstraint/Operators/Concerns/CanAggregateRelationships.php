@@ -70,22 +70,39 @@ trait CanAggregateRelationships
         return $query;
     }
 
+    /**
+     * @return array<string, string>
+     */
+    protected function getAggregateOptions(): array
+    {
+        return [
+            static::getAggregateSumKey() => __('filament-tables::filters/query-builder.operators.number.aggregates.sum.label'),
+            static::getAggregateAverageKey() => __('filament-tables::filters/query-builder.operators.number.aggregates.average.label'),
+            static::getAggregateMinKey() => __('filament-tables::filters/query-builder.operators.number.aggregates.max.label'),
+            static::getAggregateMaxKey() => __('filament-tables::filters/query-builder.operators.number.aggregates.min.label'),
+        ];
+    }
+
     protected function getAggregateSelect(): Select
     {
+        $options = $this->getAggregateOptions();
+
         return Select::make(static::getAggregateSelectName())
             ->label(__('filament-tables::filters/query-builder.operators.number.form.aggregate.label'))
-            ->options([
-                static::getAggregateSumKey() => __('filament-tables::filters/query-builder.operators.number.aggregates.sum.label'),
-                static::getAggregateAverageKey() => __('filament-tables::filters/query-builder.operators.number.aggregates.average.label'),
-                static::getAggregateMinKey() => __('filament-tables::filters/query-builder.operators.number.aggregates.max.label'),
-                static::getAggregateMaxKey() => __('filament-tables::filters/query-builder.operators.number.aggregates.min.label'),
-            ])
+            ->options($options)
+            ->in(array_keys($options))
             ->visible($this->getConstraint()->queriesRelationships());
     }
 
     protected function getAggregate(): ?string
     {
-        return $this->getSettings()[static::getAggregateSelectName()] ?? null;
+        $aggregate = $this->getSettings()[static::getAggregateSelectName()] ?? null;
+
+        if (! is_string($aggregate) || (! array_key_exists($aggregate, $this->getAggregateOptions()))) {
+            return null;
+        }
+
+        return $aggregate;
     }
 
     protected function getAttributeLabel(): string
